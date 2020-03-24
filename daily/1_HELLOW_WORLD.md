@@ -2,7 +2,7 @@
 
 周末尝试了一下初步研究并尝试了一下使用lua进行三国全面战争MOD开发的游戏玩法（花了几百块买了个编程游戏
 
-开发了一个随机生成势力的 MOD 并且发布到了创意工坊上。[[WIP]随机开局 Randomized Start (Position)](https://steamcommunity.com/sharedfiles/filedetails/?id=2031427773)。欢迎在游戏中使用以及搜藏点赞（明示）。
+开发了一个放置军事单位位置的 MOD 并且发布到了创意工坊上。[[WIP]随机开局 Randomized Start (Position)](https://steamcommunity.com/sharedfiles/filedetails/?id=2031427773)。欢迎在游戏中使用以及搜藏点赞（明示）。
 
 该MOD的源码在 [../mods/tommy_randomized_start](../mods/tommy_randomized_start)，可作参考。
 
@@ -110,11 +110,11 @@ cm:add_first_tick_callback(function(context) RUN_hello_world(context) end);
 
 有三个方法可以打开调试配置。
 
-- 方法1 直接设置全局变量，**推荐使用**
+- 方法1 直接设置全局变量，**如果想要简单，推荐使用这样**
 
-  或者你也可以在自己的lua中通过全局变量配置，这是最简单的方式，但记得发布mod的时候注释掉输出。
-
-  避免在用户文件中意外产生大量的日志信息。
+  或者你也可以在自己的lua中通过全局变量配置，这是最简单的方式。
+  
+  但记得发布mod的时候注释掉输出，避免在用户文件中意外产生大量的日志信息。
 
   ```lua
   __write_output_to_logfile = true; --- <--- 记得在发布时注释掉
@@ -147,7 +147,7 @@ cm:add_first_tick_callback(function(context) RUN_hello_world(context) end);
   ++	local filename = "script_log.txt";
   ```
 
-  改动后的文件已打包成一个单独MOD`.pack`, 可以下载并放置到data文件中并启用，[../mods/tommy_debug](../mods/tommy_debug)
+  改动后的文件已打包成一个单独MOD`.pack`, 可以下载并放置到data文件中并启用，[../mods/tommy_debug](../mods/tommy_debug) **推荐使用**
 
   注意请不要将`script\all_scripted.lua`打包进你的MOD，以免导致崩溃。
 
