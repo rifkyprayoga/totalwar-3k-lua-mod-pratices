@@ -2,6 +2,96 @@ out("3k_tommy_randomized_start.lua ****************");
 
 -- local events = get_events();
 
+local REGION_DONT_SPAWN_TOO_MUCH = {
+  ["3k_main_bohai_capital"] = true,
+  ["3k_main_dongjun_resource_1"] = true,
+  ["3k_main_penchang_resource_1"] = true,
+  ["3k_main_penchang_resource_2"] = true,
+  -- 宝岛台湾
+  ["3k_main_yizhou_resource_2"] = true,
+  ["3k_main_yizhou_resource_1"] = true,
+  ["3k_main_yizhou_island_capital"] = true,
+  -- 宝岛海南
+  ["3k_main_hepu_capital"] = true,
+  ["3k_main_hepu_resource_1"] = true
+}
+
+local MAPPINT_REGION_NAME_TO_BANDIT_NETWORK_TECH_PREFIX = {
+  ["north"] = "bing_outer",
+  ["shangdang"] = "bing",
+  ["shoufang"] = "bing",
+  ["taiyuan"] = "bing",
+  ["xihe"] = "bing",
+  ["yanmen"] = "bing",
+  ["anping"] = "ji",
+  ["weijun"] = "ji",
+  ["zhongshan"] = "ji",
+  ["cangwu"] = "jiaozhi",
+  ["gaoliang"] = "jiaozhi",
+  ["hepu"] = "jiaozhi",
+  ["jiaozhi"] = "jiaozhi",
+  ["nanhai"] = "jiaozhi",
+  ["yulin"] = "jiaozhi",
+  ["changsha"] = "jing",
+  ["jiangxia"] = "jing",
+  ["jingzhou"] = "jing",
+  ["lingling"] = "jing",
+  ["nanyang"] = "jing",
+  ["runan"] = "jing",
+  ["wuling"] = "jing",
+  ["xiangyang"] = "jing",
+  ["anding"] = "liang",
+  ["jincheng"] = "liang",
+  ["west"] = "liang_outer",
+  ["wudu"] = "liang",
+  ["wuwei"] = "liang",
+  ["beihai"] = "qing",
+  ["donglai"] = "qing",
+  ["pingyuan"] = "qing",
+  ["taishan"] = "qing",
+  ["changan"] = "sili",
+  ["hedong"] = "sili",
+  ["luoyang"] = "sili",
+  ["donghai"] = "xu",
+  ["guangling"] = "xu",
+  ["langye"] = "xu",
+  ["penchang"] = "xu",
+  ["dongjun"] = "yan",
+  ["henei"] = "yan",
+  ["yingchuan"] = "yan",
+  ["dongou"] = "yang",
+  ["jianan"] = "yang",
+  ["jianye"] = "yang",
+  ["kuaiji"] = "yang",
+  ["lujiang"] = "yang",
+  ["luling"] = "yang",
+  ["poyang"] = "yang",
+  ["tongan"] = "yang",
+  ["xindu"] = "yang",
+  ["yangzhou"] = "yang",
+  ["ye"] = "yang",
+  ["yuzhang"] = "yang",
+  ["badong"] = "yi",
+  ["bajun"] = "yi",
+  ["baxi"] = "yi",
+  ["chengdu"] = "yi",
+  ["fuling"] = "yi",
+  ["hanzhong"] = "yi",
+  ["jiangyang"] = "yi",
+  ["jianning"] = "yi",
+  ["shangyong"] = "yi",
+  ["yizhou"] = "yi",
+  ["zangke"] = "yi",
+  ["bohai"] = "you",
+  ["daijun"] = "you",
+  ["east"] = "you_outer",
+  ["north"] = "you_outer",
+  ["youbeiping"] = "you",
+  ["youzhou"] = "you",
+  ["yu"] = "you",
+  ["chenjun"] = "yu"
+}
+
 local _debug = {is_debug = true}
 
 function _debug:catch(what) return what[1] end
@@ -113,6 +203,37 @@ local function _get_random_region_position_prevent_duplicated(region_name_list_p
   return found_position, found_region_name;
 end
 
+function enable_region_tech_for_subculture_bandits(faction, faction_handle, region_primary)
+  if (faction:subculture() == "3k_dlc05_subculture_bandits") then
+    local faction_name = faction:name();
+    local region_primary_name = region_primary:name();
+    local region_short_name = string.match(region_primary_name, '^3k_main_(%w+)_(%w+).*');
+    local prefix_tech = MAPPINT_REGION_NAME_TO_BANDIT_NETWORK_TECH_PREFIX[region_short_name];
+    out("tommy_randomize_all_characters_for_faction() | " .. faction_name .. " at " .. region_primary_name ..
+          " in short " .. region_short_name);
+    if (is_nil(prefix_tech)) then return false; end
+    local tech_key = "3k_dlc05_tech_bandit_network_" .. prefix_tech .. "_" .. region_short_name;
+    out("tommy_randomize_all_characters_for_faction() | " .. faction_name .. " at " .. region_short_name ..
+          " | amied tech:" .. tech_key);
+    -- faction_handle:lock_technology(tech_key)
+    -- faction_handle:unlock_technology(tech_key)
+    -- if (faction_name == "3k_main_faction_zheng_jiang") then
+    --   campaign_tutorial.faction_settings["3k_main_faction_zheng_jiang"] = {
+    --     enemy_faction_key = "3k_main_faction_han_empire",
+    --     target_settlement_key = region_primary_name,
+    --     own_settlement_key = region_primary_name,
+    --     own_settlement_building_index = 0,
+    --     starting_force_position = nil,
+    --     own_force_label_left = false,
+    --     enemy_force_label_left = false
+    --   }
+    -- end
+
+    return true;
+  end
+  return false;
+end
+
 -- randomize all characters for faction
 local function tommy_randomize_all_characters_for_faction(context, faction, initial_positions_of_region_expand)
   out("tommy_randomize_all_characters_for_faction() | START of script | (" .. faction:name() .. ")");
@@ -136,7 +257,7 @@ local function tommy_randomize_all_characters_for_faction(context, faction, init
     local result = {};
     local region_list_normal = region_list_adjacent_normal;
     for r = 1, #region_list_normal do result[r] = region_list_normal[r]:name(); end
-    out("tommy_randomize_all_characters_for_faction() | " ..faction:name().. " | from adjacent region," .. #result);
+    out("tommy_randomize_all_characters_for_faction() | " .. faction:name() .. " | from adjacent region," .. #result);
     return result;
   end
 
@@ -144,7 +265,7 @@ local function tommy_randomize_all_characters_for_faction(context, faction, init
     local result = {};
     local region_list_normal = region_list_world_normal;
     for r = 1, #region_list_normal do result[r] = region_list_normal[r]:name(); end
-    out("tommy_randomize_all_characters_for_faction() | " ..faction:name().. " | from all region," .. #result);
+    out("tommy_randomize_all_characters_for_faction() | " .. faction:name() .. " | from all region," .. #result);
     return result;
   end
 
@@ -164,7 +285,7 @@ local function tommy_randomize_all_characters_for_faction(context, faction, init
     region_name_list = get_region_name_list_from_adjacent();
   else
     for r = 1, #region_list_normal do region_name_list[r] = region_list_normal[r]:name(); end
-    out("tommy_randomize_all_characters_for_faction() | " ..faction:name().. " | from own," .. region_list:num_items());
+    out("tommy_randomize_all_characters_for_faction() | " .. faction:name() .. " | from own," .. region_list:num_items());
   end
 
   if (faction:has_faction_leader()) then faction_leader = faction:faction_leader(); end
@@ -200,53 +321,64 @@ local function tommy_randomize_all_characters_for_faction(context, faction, init
   if is_faction_local_me then
     local faction_handle = cm:modify_faction(faction:name());
     local key_event_handle = "3k_tommy_randomized_start_reposition_camera";
-    out("tommy_randomize_all_characters_for_faction() | add_listener ScriptEventCampaignCutsceneCompleted");
-    core:add_listener(key_event_handle, "ScriptEventCampaignCutsceneCompleted", true, function(e)
-      out("tommy_randomize_all_characters_for_faction() | on ScriptEventCampaignCutsceneCompleted");
-      _debug:try{
-        function()
-          if (cm:query_model():turn_number() > 1) then
+    if (cm:is_multiplayer()) then
+      -- TODO: scroll_camera_from_current for multiplayer mode
+    else
+      out("tommy_randomize_all_characters_for_faction() | add_listener ScriptEventCampaignCutsceneCompleted");
+      core:add_listener(key_event_handle, "ScriptEventCampaignCutsceneCompleted", true, function(e)
+        out("tommy_randomize_all_characters_for_faction() | on ScriptEventCampaignCutsceneCompleted");
+        _debug:try{
+          function()
+            if (cm:query_model():turn_number() > 1) then
+              core:remove_listener(key_event_handle);
+              return false;
+            end
             core:remove_listener(key_event_handle);
-            return false;
-          end
-          local x_primary, y_primary, region_primary = tommy_get_primary_military_force_position(faction);
-          out(
-            "tommy_randomize_all_characters_for_faction() | reposition camera | tommy_get_primary_military_force_position() " ..
-              _get_bool_str(not is_nil(region_primary)));
-          if (is_nil(region_primary)) then return false; end
-          -- 让主要目标所在的区域可以显示
-          faction_handle:make_region_seen_in_shroud(region_primary:name());
-          -- for i = 0, region_list_world:num_items() - 1 do end
-          local x, y, d, b, h = cm:get_camera_position();
-          cm:callback(function()
-            out("tommy_randomize_all_characters_for_faction() | reposition camera | x_faction_leader:" .. x_primary ..
-                  ", y_faction_leader:" .. y_primary .. ", at:" .. region_primary:name());
-            cm:scroll_camera_from_current(1.5, nil, {x_primary, y_primary, d, b, h});
-            -- cm:set_camera_position(x_primary, y_primary, d, b, h);
-          end, 1);
+            local x_primary, y_primary, region_primary = tommy_get_primary_military_force_position(faction);
+            out(
+              "tommy_randomize_all_characters_for_faction() | reposition camera | tommy_get_primary_military_force_position() " ..
+                _get_bool_str(not is_nil(region_primary)));
+            if (is_nil(region_primary)) then return false; end
+            -- 让主要目标所在的区域可以显示
+            faction_handle:make_region_seen_in_shroud(region_primary:name());
+            -- for i = 0, region_list_world:num_items() - 1 do end
+            local x, y, d, b, h = cm:get_camera_position();
+            cm:callback(function()
+              out("tommy_randomize_all_characters_for_faction() | reposition camera | x_faction_leader:" .. x_primary ..
+                    ", y_faction_leader:" .. y_primary .. ", at:" .. region_primary:name());
+              cm:scroll_camera_from_current(1.5, nil, {x_primary, y_primary, d, b, h});
+              -- cm:set_camera_position(x_primary, y_primary, d, b, h);
+            end, 1);
 
-          if (region_primary:is_abandoned()) and is_faction_has_no_region then
-            -- 如果初始区域是一个废弃区域就把这个区域设置给玩家
-            cm:modify_model():get_modify_region(region_primary):settlement_gifted_as_if_by_payload(faction_handle);
-          end
-
-          core:remove_listener(key_event_handle);
-          return true;
-        end, _debug:catch{function(error)
-          script_error('3k_tommy_randomized_start.lua | CAUGHT ERROR: ' .. error);
-        end}
-      }
-    end, true);
-  else
-    if (is_faction_has_no_region) then
-      local faction_handle = cm:modify_faction(faction:name());
-      local _, __, region_primary = tommy_get_primary_military_force_position(faction);
-      if (region_primary:is_abandoned()) then
-        -- 如果初始区域是一个废弃区域就把这个区域设置给AI
-        cm:modify_model():get_modify_region(region_primary):settlement_gifted_as_if_by_payload(faction_handle);
-      end
+            -- if (region_primary:is_abandoned()) and is_faction_has_no_region then
+            --   -- 如果初始区域是一个废弃区域就把这个区域设置给玩家
+            --   cm:modify_model():get_modify_region(region_primary):settlement_gifted_as_if_by_payload(faction_handle);
+            -- end
+            return true;
+          end,
+          _debug:catch{function(error) script_error('3k_tommy_randomized_start.lua | CAUGHT ERROR: ' .. error); end}
+        }
+      end, true);
     end
   end
+
+  cm:add_pre_first_tick_callback(function()
+    _debug:try{
+      function()
+        if (is_faction_has_no_region) then
+          local faction_handle = cm:modify_faction(faction:name());
+          local _, __, region_primary = tommy_get_primary_military_force_position(faction);
+          out("tommy_randomize_all_characters_for_faction() | timeout:1 | faction:" .. faction:name() ..
+                " final_region_primary:" .. region_primary:name() .. " subclture:" .. faction:subculture())
+          if (region_primary:is_abandoned()) then
+            -- 如果初始区域是一个废弃区域就把这个区域设置给玩家/AI
+            cm:modify_model():get_modify_region(region_primary):settlement_gifted_as_if_by_payload(faction_handle);
+          end
+          enable_region_tech_for_subculture_bandits(faction, faction_handle, region_primary);
+        end
+      end, _debug:catch{function(error) script_error('3k_tommy_randomized_start.lua | CAUGHT ERROR: ' .. error); end}
+    }
+  end);
 
   out("tommy_randomize_all_characters_for_faction() | END of script ");
 end
@@ -275,28 +407,30 @@ local function _get_all_valid_positions_of_region(faction_list)
   for f = 0, faction_list:num_items() - 1 do
     local faction = faction_list:item_at(f);
     local mforce_list = faction:military_force_list();
-    out("tommy_randomize_start() | _get_all_valid_positions_of_region() | " .. faction:name());
+    if (not faction:is_dead()) then
+      out("tommy_randomize_start() | _get_all_valid_positions_of_region() | " .. faction:name());
 
-    -- get initial military force positions in wild
-    for i = 0, mforce_list:num_items() - 1 do
-      local force = mforce_list:item_at(i);
-      if force:is_armed_citizenry() == false and force:has_general() == true then
-        local general = force:general_character();
-        if not general:in_settlement() and not general:in_port() then
-          local general_x = general:logical_position_x();
-          local general_y = general:logical_position_y();
-          position_list[#position_list + 1] = {general_x, general_y, general:region():name(), true}
+      -- get initial military force positions in wild
+      for i = 0, mforce_list:num_items() - 1 do
+        local force = mforce_list:item_at(i);
+        if force:is_armed_citizenry() == false and force:has_general() == true then
+          local general = force:general_character();
+          if not general:in_settlement() and not general:in_port() then
+            local general_x = general:logical_position_x();
+            local general_y = general:logical_position_y();
+            position_list[#position_list + 1] = {general_x, general_y, general:region():name(), true}
+          end
         end
       end
-    end
 
-    -- get spawn position from CA get_valid_spawn_location_in_region API
-    for j = 1, #region_list_world_raw do
-      local region = region_list_world_raw[j]
-      local positions_region_spawn = _get_valid_spawn_location_in_region_until_different(faction, region:name(), 3)
-      for k = 1, #positions_region_spawn do
-        local x, y, region_name = unpack(positions_region_spawn[k]);
-        position_list[#position_list + 1] = {x, y, region_name, false}
+      -- get spawn position from CA get_valid_spawn_location_in_region API
+      for j = 1, #region_list_world_raw do
+        local region = region_list_world_raw[j]
+        local positions_region_spawn = _get_valid_spawn_location_in_region_until_different(faction, region:name(), 3)
+        for k = 1, #positions_region_spawn do
+          local x, y, region_name = unpack(positions_region_spawn[k]);
+          position_list[#position_list + 1] = {x, y, region_name, false}
+        end
       end
     end
   end
@@ -316,20 +450,6 @@ local function _get_all_valid_positions_of_region(faction_list)
 
   return position_region_mapping;
 end
-
-local REGION_DONT_SPAWN_TOO_MUCH = {
-  ["3k_main_bohai_capital"] = true,
-  ["3k_main_dongjun_resource_1"] = true,
-  ["3k_main_penchang_resource_1"] = true,
-  ["3k_main_penchang_resource_2"] = true,
-  -- 宝岛台湾
-  ["3k_main_yizhou_resource_2"] = true,
-  ["3k_main_yizhou_resource_1"] = true,
-  ["3k_main_yizhou_island_capital"] = true,
-  -- 宝岛海南
-  ["3k_main_hepu_capital"] = true,
-  ["3k_main_hepu_resource_1"] = true
-}
 
 -- main function
 local function tommy_randomize_start(context)
