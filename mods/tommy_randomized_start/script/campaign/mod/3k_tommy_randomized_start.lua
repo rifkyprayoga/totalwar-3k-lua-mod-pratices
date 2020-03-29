@@ -103,9 +103,18 @@ function _debug:try(what)
   return result
 end
 
+local random_call_offset = 0;
+local function better_math_randomseed() 
+  random_call_offset = random_call_offset + 1;
+  math.randomseed(tonumber(tostring(6 * random_call_offset + os.time() * 2 * random_call_offset):reverse():sub(1, 8)));
+  if (random_call_offset > 100) then
+    random_call_offset = 0;
+  end
+end
+
 local function random_split_2(min, range)
   local rangeToRand = (range - min - 2);
-  math.randomseed(os.time());
+  better_math_randomseed();
   local randIntl = (math.random() * rangeToRand) - (rangeToRand * 2)
   local randIntlHalf = (randIntl / 2);
   return ((randIntlHalf / math.abs(randIntlHalf)) * min) + randIntlHalf
@@ -178,12 +187,12 @@ local function _get_random_region_position_prevent_duplicated(region_name_list_p
   local found_position = nil
   local found_region_name = nil
   while attemp <= attemp_max and is_nil(found_position) do
-    math.randomseed(os.time());
+    better_math_randomseed();
     local region_name_random_picked = region_name_list_patched[math.random(#region_name_list_patched)];
     local position_list = initial_positions_of_region_expand[region_name_random_picked];
 
     if (not is_nil(position_list)) then
-      math.randomseed(os.time());
+      better_math_randomseed();
       local index_random = math.random(#position_list);
       local position = position_list[index_random];
       if (not is_nil(MAPPING_PICKED_POSITIONS_COUNT["" .. region_name_random_picked .. "_" .. index_random])) then
@@ -213,8 +222,10 @@ function enable_region_tech_for_subculture_bandits(faction, faction_handle, regi
           " in short " .. region_short_name);
     if (is_nil(prefix_tech)) then return false; end
     local tech_key = "3k_dlc05_tech_bandit_network_" .. prefix_tech .. "_" .. region_short_name;
+    local result_is_enabled = false;
+    -- local result_is_enabled = faction_handle:begin_tech_research(tech_key)
     out("tommy_randomize_all_characters_for_faction() | " .. faction_name .. " at " .. region_short_name ..
-          " | amied tech:" .. tech_key);
+          " | amied tech:" .. tech_key .. " " .. _get_bool_str(result_is_enabled));
     -- faction_handle:lock_technology(tech_key)
     -- faction_handle:unlock_technology(tech_key)
     -- if (faction_name == "3k_main_faction_zheng_jiang") then
@@ -308,8 +319,8 @@ local function tommy_randomize_all_characters_for_faction(context, faction, init
               " found_position:" .. _get_bool_str(not is_nil(position)));
         if (not is_nil(position)) then
           local final_x, final_y = unpack(position);
-          final_x = final_x + random_split_2(0.66, 0.66);
-          final_y = final_y + random_split_2(0.66, 0.66);
+          final_x = final_x + random_split_2(1, 0.96);
+          final_y = final_y + random_split_2(1, 0.96);
           out("tommy_randomize_all_characters_for_faction() | before teleport, pick:" .. region_name_random_picked ..
                 " found_position:" .. final_x .. "," .. final_y);
           cm:teleport_character(general, final_x, final_y);
@@ -341,6 +352,7 @@ local function tommy_randomize_all_characters_for_faction(context, faction, init
             if (is_nil(region_primary)) then return false; end
             -- 让主要目标所在的区域可以显示
             faction_handle:make_region_seen_in_shroud(region_primary:name());
+            faction_handle:make_region_visible_in_shroud(region_primary:name());
             -- for i = 0, region_list_world:num_items() - 1 do end
             local x, y, d, b, h = cm:get_camera_position();
             cm:callback(function()
@@ -362,7 +374,7 @@ local function tommy_randomize_all_characters_for_faction(context, faction, init
     end
   end
 
-  cm:add_pre_first_tick_callback(function()
+  cm:callback(function()
     _debug:try{
       function()
         if (is_faction_has_no_region) then
@@ -378,7 +390,7 @@ local function tommy_randomize_all_characters_for_faction(context, faction, init
         end
       end, _debug:catch{function(error) script_error('3k_tommy_randomized_start.lua | CAUGHT ERROR: ' .. error); end}
     }
-  end);
+  end, 0.2);
 
   out("tommy_randomize_all_characters_for_faction() | END of script ");
 end
