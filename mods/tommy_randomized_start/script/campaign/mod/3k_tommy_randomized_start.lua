@@ -104,20 +104,18 @@ function _debug:try(what)
 end
 
 local random_call_offset = 0;
-local function better_math_randomseed() 
+local function better_math_randomseed()
   random_call_offset = random_call_offset + 1;
   math.randomseed(tonumber(tostring(6 * random_call_offset + os.time() * 2 * random_call_offset):reverse():sub(1, 8)));
-  if (random_call_offset > 100) then
-    random_call_offset = 0;
-  end
+  if (random_call_offset > 100) then random_call_offset = 0; end
 end
 
 local function random_split_2(min, range)
-  local rangeToRand = (range - min - 2);
+  local rangeToRand = (min + range);
   better_math_randomseed();
-  local randIntl = (math.random() * rangeToRand) - (rangeToRand * 2)
-  local randIntlHalf = (randIntl / 2);
-  return ((randIntlHalf / math.abs(randIntlHalf)) * min) + randIntlHalf
+  local randIntl = (math.random() * rangeToRand * 2) - (rangeToRand);
+  local edgeLeftIntl = ((randIntl / math.abs(randIntl)) * min);
+  return edgeLeftIntl + (randIntl - edgeLeftIntl);
 end
 
 local function tommy_is_faction_local_human(context, faction)
